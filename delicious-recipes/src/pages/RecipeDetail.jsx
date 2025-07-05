@@ -1,0 +1,236 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Clock, Users, ChefHat, Loader2 } from 'lucide-react';
+import PriceDisplay from '../components/PriceDisplay.jsx';
+
+const RecipeDetail = () => {
+  const { id } = useParams();
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRecipe = async () => {
+      try {
+        const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch recipe');
+        }
+        const data = await response.json();
+        
+        // Add recipe-specific data
+        const recipeData = {
+          ...data,
+          price: (Math.random() * 25 + 5).toFixed(2),
+          cookTime: 20 + (parseInt(id) % 40),
+          servings: 2 + (parseInt(id) % 4),
+          difficulty: ['Easy', 'Medium', 'Hard'][parseInt(id) % 3],
+          ingredients: [
+            '2 cups fresh vegetables',
+            '1 lb protein of choice',
+            '3 tbsp olive oil',
+            '2 cloves garlic, minced',
+            'Salt and pepper to taste',
+            '1 cup broth or stock',
+            'Fresh herbs for garnish'
+          ],
+          instructions: [
+            'Prepare all ingredients by washing and chopping as needed.',
+            'Heat olive oil in a large pan over medium-high heat.',
+            'Add garlic and cook until fragrant, about 1 minute.',
+            'Add protein and cook until browned on all sides.',
+            'Add vegetables and cook until tender.',
+            'Pour in broth and simmer for 10-15 minutes.',
+            'Season with salt and pepper to taste.',
+            'Garnish with fresh herbs and serve immediately.'
+          ],
+          nutrition: {
+            calories: 350 + (parseInt(id) % 200),
+            protein: '25g',
+            carbs: '30g',
+            fat: '15g'
+          }
+        };
+        
+        setRecipe(recipeData);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipe();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-orange-600 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg">Loading recipe details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !recipe) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4 text-lg">Error loading recipe: {error}</p>
+          <Link
+            to="/recipes"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
+          >
+            Back to Recipes
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty) {
+      case 'Easy': return 'bg-green-100 text-green-800';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800';
+      case 'Hard': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTrendDirection = () => {
+    const trends = ['up', 'down', 'stable'];
+    return trends[parseInt(id) % 3];
+  };
+
+  return (
+    <div className="py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <Link
+            to="/recipes"
+            className="inline-flex items-center text-orange-600 hover:text-orange-800 font-medium transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Recipes
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="relative">
+                <img 
+                  src={`https://images.pexels.com/photos/${1640777 + parseInt(id)}/pexels-photo-${1640777 + parseInt(id)}.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop`}
+                  alt={recipe.title}
+                  className="w-full h-64 md:h-80 object-cover"
+                />
+                <div className="absolute top-6 right-6">
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${getDifficultyColor(recipe.difficulty)}`}>
+                    {recipe.difficulty}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="p-8">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{recipe.title}</h1>
+                
+                <div className="flex items-center space-x-6 mb-6 text-gray-600">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 mr-2 text-orange-500" />
+                    <span>{recipe.cookTime} minutes</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-blue-500" />
+                    <span>{recipe.servings} servings</span>
+                  </div>
+                  <div className="flex items-center">
+                    <ChefHat className="h-5 w-5 mr-2 text-purple-500" />
+                    <span>{recipe.difficulty}</span>
+                  </div>
+                </div>
+
+                <p className="text-gray-600 mb-8 leading-relaxed text-lg">
+                  {recipe.body}
+                </p>
+
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
+                  <ul className="space-y-2">
+                    {recipe.ingredients.map((ingredient, index) => (
+                      <li key={index} className="flex items-start">
+                        <div className="h-2 w-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                        <span className="text-gray-700">{ingredient}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
+                  <ol className="space-y-4">
+                    {recipe.instructions.map((instruction, index) => (
+                      <li key={index} className="flex items-start">
+                        <div className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 flex-shrink-0 mt-0.5">
+                          {index + 1}
+                        </div>
+                        <span className="text-gray-700 leading-relaxed">{instruction}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <PriceDisplay price={recipe.price} trend={getTrendDirection()} />
+
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Nutrition Facts</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Calories</span>
+                  <span className="font-semibold text-gray-900">{recipe.nutrition.calories}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Protein</span>
+                  <span className="font-semibold text-gray-900">{recipe.nutrition.protein}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-gray-600">Carbohydrates</span>
+                  <span className="font-semibold text-gray-900">{recipe.nutrition.carbs}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-600">Fat</span>
+                  <span className="font-semibold text-gray-900">{recipe.nutrition.fat}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 border border-orange-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Recipe Tips</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li>• Prep all ingredients before starting to cook</li>
+                <li>• Taste and adjust seasoning as needed</li>
+                <li>• Store leftovers in the refrigerator for up to 3 days</li>
+                <li>• Feel free to substitute ingredients based on preferences</li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4"></h3>
+              <p className="text-gray-600 mb-4">
+              </p>
+              <button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105">
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RecipeDetail;
