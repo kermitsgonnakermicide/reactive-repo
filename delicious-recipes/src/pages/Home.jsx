@@ -1,34 +1,67 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChefHat, Clock, Users, Star } from 'lucide-react';
+import { ArrowRight, ChefHat, Clock, Users, Star, Loader2 } from 'lucide-react';
 
 const Home = () => {
-  const featuredRecipes = [
-    {
-      id: 1,
-      title: "Mediterranean Pasta Salad",
-      image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
-      time: "25 min",
-      servings: 4,
-      rating: 4.8
-    },
-    {
-      id: 2,
-      title: "Grilled Salmon with Herbs",
-      image: "https://images.pexels.com/photos/1640778/pexels-photo-1640778.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
-      time: "30 min",
-      servings: 2,
-      rating: 4.9
-    },
-    {
-      id: 3,
-      title: "Chocolate Lava Cake",
-      image: "https://images.pexels.com/photos/1640779/pexels-photo-1640779.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
-      time: "45 min",
-      servings: 6,
-      rating: 4.7
-    }
-  ];
+  const [featuredRecipes, setFeaturedRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedRecipes = async () => {
+      try {
+        const response = await fetch('https://api.spoonacular.com/recipes/random?limitLicense=true&number=3&apiKey=42efc48359744b818de56cd5c7947ae5');
+        if (!response.ok) {
+          throw new Error('Failed to fetch featured recipes');
+        }
+        const data = await response.json();
+        
+        if (data.recipes && data.recipes.length > 0) {
+          const recipes = data.recipes.map(recipe => ({
+            id: recipe.id,
+            title: recipe.title,
+            image: recipe.image || `https://images.pexels.com/photos/${1640777 + recipe.id}/pexels-photo-${1640777 + recipe.id}.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop`,
+            time: `${recipe.readyInMinutes} min`,
+            servings: recipe.servings,
+            rating: (4.5 + (Math.random() * 0.5)).toFixed(1) // Random rating between 4.5-5.0
+          }));
+          setFeaturedRecipes(recipes);
+        }
+      } catch (err) {
+        console.error('Error fetching featured recipes:', err);
+        // Fallback to default recipes if API fails
+        setFeaturedRecipes([
+          {
+            id: 1,
+            title: "Mediterranean Pasta Salad",
+            image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+            time: "25 min",
+            servings: 4,
+            rating: 4.8
+          },
+          {
+            id: 2,
+            title: "Grilled Salmon with Herbs",
+            image: "https://images.pexels.com/photos/1640778/pexels-photo-1640778.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+            time: "30 min",
+            servings: 2,
+            rating: 4.9
+          },
+          {
+            id: 3,
+            title: "Chocolate Lava Cake",
+            image: "https://images.pexels.com/photos/1640779/pexels-photo-1640779.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop",
+            time: "45 min",
+            servings: 6,
+            rating: 4.7
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedRecipes();
+  }, []);
 
   const backgroundPattern = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -116,45 +149,59 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredRecipes.map((recipe) => (
-              <div key={recipe.id} className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={recipe.image}
-                    alt={recipe.title}
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center space-x-1">
-                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                    <span className="text-sm font-semibold text-gray-800">{recipe.rating}</span>
+            {loading ? (
+              // Loading state
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="h-48 bg-gray-200 animate-pulse"></div>
+                  <div className="p-6">
+                    <div className="h-6 bg-gray-200 rounded animate-pulse mb-3"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse mb-4"></div>
+                    <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
                   </div>
                 </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors">
-                    {recipe.title}
-                  </h3>
-                  
-                  <div className="flex items-center justify-between mb-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1 text-orange-500" />
-                      <span>{recipe.time}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-1 text-blue-500" />
-                      <span>{recipe.servings} servings</span>
+              ))
+            ) : (
+              featuredRecipes.map((recipe) => (
+                <div key={recipe.id} className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
+                  <div className="relative overflow-hidden">
+                    <img 
+                      src={recipe.image}
+                      alt={recipe.title}
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center space-x-1">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      <span className="text-sm font-semibold text-gray-800">{recipe.rating}</span>
                     </div>
                   </div>
                   
-                  <Link
-                    to={`/recipes/${recipe.id}`}
-                    className="block w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-center py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
-                  >
-                    view recipe
-                  </Link>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors">
+                      {recipe.title}
+                    </h3>
+                    
+                    <div className="flex items-center justify-between mb-4 text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1 text-orange-500" />
+                        <span>{recipe.time}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-1 text-blue-500" />
+                        <span>{recipe.servings} servings</span>
+                      </div>
+                    </div>
+                    
+                    <Link
+                      to={`/recipes/${recipe.id}`}
+                      className="block w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-center py-3 px-4 rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
+                    >
+                      view recipe
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           <div className="text-center mt-12">

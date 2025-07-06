@@ -12,20 +12,30 @@ const RecipeDetail = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
+        const response = await fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=42efc48359744b818de56cd5c7947ae5`);
         if (!response.ok) {
           throw new Error('Failed to fetch recipe');
         }
-        const data = await response.json();
+        const recipeData = await response.json();
         
-        // Add recipe-specific data
-        const recipeData = {
-          ...data,
-          price: (Math.random() * 25 + 5).toFixed(2),
-          cookTime: 20 + (parseInt(id) % 40),
-          servings: 2 + (parseInt(id) % 4),
-          difficulty: ['Easy', 'Medium', 'Hard'][parseInt(id) % 3],
-          ingredients: [
+        // Validate that we have the required fields
+        if (!recipeData.title) {
+          throw new Error('Invalid recipe data received');
+        }
+        
+        // Map the Spoonacular data to our recipe format
+        const mappedRecipe = {
+          id: recipeData.id,
+          title: recipeData.title,
+          body: recipeData.summary ? 
+            recipeData.summary.replace(/<[^>]*>/g, '').trim() || 
+            `A delicious ${recipeData.title.toLowerCase()} recipe that's perfect for any occasion. This dish combines fresh ingredients with amazing flavors to create a memorable dining experience.` : 
+            `A delicious ${recipeData.title.toLowerCase()} recipe that's perfect for any occasion. This dish combines fresh ingredients with amazing flavors to create a memorable dining experience.`,
+          price: (recipeData.pricePerServing / 100).toFixed(2), // Convert cents to dollars
+          cookTime: recipeData.readyInMinutes,
+          servings: recipeData.servings,
+          difficulty: ['Easy', 'Medium', 'Hard'][parseInt(recipeData.id) % 3],
+          ingredients: recipeData.extendedIngredients ? recipeData.extendedIngredients.map(ingredient => ingredient.original) : [
             '2 cups fresh vegetables',
             '1 lb protein of choice',
             '3 tbsp olive oil',
@@ -34,7 +44,7 @@ const RecipeDetail = () => {
             '1 cup broth or stock',
             'Fresh herbs for garnish'
           ],
-          instructions: [
+          instructions: recipeData.instructions ? recipeData.instructions.split('\n').filter(step => step.trim()) : [
             'Prepare all ingredients by washing and chopping as needed.',
             'Heat olive oil in a large pan over medium-high heat.',
             'Add garlic and cook until fragrant, about 1 minute.',
@@ -45,14 +55,15 @@ const RecipeDetail = () => {
             'Garnish with fresh herbs and serve immediately.'
           ],
           nutrition: {
-            calories: 350 + (parseInt(id) % 200),
+            calories: 350 + (parseInt(recipeData.id) % 200),
             protein: '25g',
             carbs: '30g',
             fat: '15g'
-          }
+          },
+          image: recipeData.image || `https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop`
         };
         
-        setRecipe(recipeData);
+        setRecipe(mappedRecipe);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -61,7 +72,7 @@ const RecipeDetail = () => {
     };
 
     fetchRecipe();
-  }, [id]);
+  }, [id]); // Add id dependency back since we're fetching by ID
 
   if (loading) {
     return (
@@ -101,7 +112,7 @@ const RecipeDetail = () => {
 
   const getTrendDirection = () => {
     const trends = ['up', 'down', 'stable'];
-    return trends[parseInt(id) % 3];
+    return trends[parseInt(recipe.id) % 3];
   };
 
   return (
@@ -122,7 +133,7 @@ const RecipeDetail = () => {
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
               <div className="relative">
                 <img 
-                  src={`https://images.pexels.com/photos/${1640777 + parseInt(id)}/pexels-photo-${1640777 + parseInt(id)}.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop`}
+                  src={recipe.image}
                   alt={recipe.title}
                   className="w-full h-64 md:h-80 object-cover"
                 />

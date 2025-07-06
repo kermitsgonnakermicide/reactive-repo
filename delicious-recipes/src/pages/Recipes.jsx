@@ -11,16 +11,29 @@ const Recipes = () => {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+        const response = await fetch('https://api.spoonacular.com/recipes/random?limitLicense=true&number=20&apiKey=42efc48359744b818de56cd5c7947ae5');
         if (!response.ok) {
           throw new Error('Failed to fetch recipes');
         }
         const data = await response.json();
         
-        // Transform posts into recipes with prices
-        const recipesWithPrices = data.slice(0, 20).map(post => ({
-          ...post,
-          price: (Math.random() * 25 + 5).toFixed(2) // Random price between $5-30
+        // Check if we have recipes in the response
+        if (!data.recipes || data.recipes.length === 0) {
+          throw new Error('No recipes found');
+        }
+        
+        // Transform Spoonacular recipes into our format
+        const recipesWithPrices = data.recipes.map(recipe => ({
+          id: recipe.id,
+          title: recipe.title,
+          body: recipe.summary ? 
+            recipe.summary.replace(/<[^>]*>/g, '').trim() || 
+            `A delicious ${recipe.title.toLowerCase()} recipe that's perfect for any occasion.` : 
+            `A delicious ${recipe.title.toLowerCase()} recipe that's perfect for any occasion.`,
+          price: (recipe.pricePerServing / 100).toFixed(2), // Convert cents to dollars
+          cookTime: recipe.readyInMinutes,
+          servings: recipe.servings,
+          image: recipe.image || `https://images.pexels.com/photos/${1640777 + recipe.id}/pexels-photo-${1640777 + recipe.id}.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop`
         }));
         
         setRecipes(recipesWithPrices);

@@ -7,7 +7,7 @@ const RecipeCard = ({ recipe }) => {
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
       <div className="relative overflow-hidden">
         <img 
-          src={`https://images.pexels.com/photos/${1640777 + recipe.id}/pexels-photo-${1640777 + recipe.id}.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&fit=crop`}
+          src={recipe.image}
           alt={recipe.title}
           className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
         />
@@ -32,11 +32,11 @@ const RecipeCard = ({ recipe }) => {
           <div className="flex items-center space-x-4 text-sm text-gray-500">
             <div className="flex items-center">
               <Clock className="h-4 w-4 mr-1 text-orange-500" />
-              <span>{20 + (recipe.id % 40)} min</span>
+              <span>{recipe.cookTime} min</span>
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-1 text-blue-500" />
-              <span>{2 + (recipe.id % 4)} servings</span>
+              <span>{recipe.servings} servings</span>
             </div>
           </div>
         </div>
