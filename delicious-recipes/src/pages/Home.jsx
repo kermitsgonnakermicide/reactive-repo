@@ -9,7 +9,7 @@ const Home = () => {
   useEffect(() => {
     const fetchFeaturedRecipes = async () => {
       try {
-        const response = await fetch('https://api.spoonacular.com/recipes/random?limitLicense=true&number=3&apiKey=42efc48359744b818de56cd5c7947ae5');
+        const response = await fetch(`https://api.spoonacular.com/recipes/random?limitLicense=true&number=3&apiKey=${import.meta.env.VITE_SPOONACULAR_API_KEY}`);
         if (!response.ok) {
           throw new Error('Failed to fetch featured recipes');
         }

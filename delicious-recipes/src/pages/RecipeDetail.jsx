@@ -12,7 +12,7 @@ const RecipeDetail = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=42efc48359744b818de56cd5c7947ae5`);
+        const response = await fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${import.meta.env.VITE_SPOONACULAR_API_KEY}`);
         if (!response.ok) {
           throw new Error('Failed to fetch recipe');
         }
