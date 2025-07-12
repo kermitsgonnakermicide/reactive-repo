@@ -24,9 +24,10 @@ const RecipeCard = ({ recipe }) => {
           {recipe.title}
         </h3>
         
-        <p className="text-gray-600 mb-4 line-clamp-3 leading-relaxed">
-          {recipe.body}
-        </p>
+        <p
+          className="text-gray-600 mb-4 line-clamp-3 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: recipe.body }}
+        />
         
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4 text-sm text-gray-500">

@@ -12,11 +12,28 @@ const RecipeDetail = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${import.meta.env.VITE_SPOONACULAR_API_KEY}`);
+        console.log('Recipe ID:', id);
+        const apiUrl = `https://api.spoonacular.com/recipes/${id}/information?apiKey=42efc48359744b818de56cd5c7947ae5`;
+        console.log('API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch recipe');
+          const errorText = await response.text();
+          console.error('Response error text:', errorText);
+          throw new Error(`Failed to fetch recipe: ${response.status} ${response.statusText}`);
         }
+        
         const recipeData = await response.json();
+        console.log('Recipe data:', recipeData);
         
         // Validate that we have the required fields
         if (!recipeData.title) {
@@ -35,25 +52,49 @@ const RecipeDetail = () => {
           cookTime: recipeData.readyInMinutes,
           servings: recipeData.servings,
           difficulty: ['Easy', 'Medium', 'Hard'][parseInt(recipeData.id) % 3],
-          ingredients: recipeData.extendedIngredients ? recipeData.extendedIngredients.map(ingredient => ingredient.original) : [
-            '2 cups fresh vegetables',
-            '1 lb protein of choice',
-            '3 tbsp olive oil',
-            '2 cloves garlic, minced',
-            'Salt and pepper to taste',
-            '1 cup broth or stock',
-            'Fresh herbs for garnish'
-          ],
-          instructions: recipeData.instructions ? recipeData.instructions.split('\n').filter(step => step.trim()) : [
-            'Prepare all ingredients by washing and chopping as needed.',
-            'Heat olive oil in a large pan over medium-high heat.',
-            'Add garlic and cook until fragrant, about 1 minute.',
-            'Add protein and cook until browned on all sides.',
-            'Add vegetables and cook until tender.',
-            'Pour in broth and simmer for 10-15 minutes.',
-            'Season with salt and pepper to taste.',
-            'Garnish with fresh herbs and serve immediately.'
-          ],
+          ingredients: (() => {
+            // Handle different possible ingredient formats from Spoonacular
+            if (recipeData.extendedIngredients && Array.isArray(recipeData.extendedIngredients)) {
+              return recipeData.extendedIngredients.map(ingredient => ingredient.original || ingredient.name);
+            } else if (recipeData.ingredients && Array.isArray(recipeData.ingredients)) {
+              return recipeData.ingredients;
+            } else {
+              // Fallback ingredients
+              return [
+                '2 cups fresh vegetables',
+                '1 lb protein of choice',
+                '3 tbsp olive oil',
+                '2 cloves garlic, minced',
+                'Salt and pepper to taste',
+                '1 cup broth or stock',
+                'Fresh herbs for garnish'
+              ];
+            }
+          })(),
+          instructions: (() => {
+            // Handle different possible instruction formats from Spoonacular
+            if (recipeData.instructions) {
+              // Remove HTML tags and split by newlines or periods
+              const cleanInstructions = recipeData.instructions.replace(/<[^>]*>/g, '');
+              const steps = cleanInstructions.split(/\n+|\.\s+/).filter(step => step.trim().length > 10);
+              if (steps.length > 0) {
+                return steps.slice(0, 8); // Limit to 8 steps
+              }
+            } else if (recipeData.analyzedInstructions && recipeData.analyzedInstructions.length > 0) {
+              return recipeData.analyzedInstructions[0].steps.map(step => step.step);
+            }
+            // Fallback instructions
+            return [
+              'Prepare all ingredients by washing and chopping as needed.',
+              'Heat olive oil in a large pan over medium-high heat.',
+              'Add garlic and cook until fragrant, about 1 minute.',
+              'Add protein and cook until browned on all sides.',
+              'Add vegetables and cook until tender.',
+              'Pour in broth and simmer for 10-15 minutes.',
+              'Season with salt and pepper to taste.',
+              'Garnish with fresh herbs and serve immediately.'
+            ];
+          })(),
           nutrition: {
             calories: 350 + (parseInt(recipeData.id) % 200),
             protein: '25g',
@@ -62,6 +103,10 @@ const RecipeDetail = () => {
           },
           image: recipeData.image || `https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop`
         };
+        
+        console.log('Mapped recipe:', mappedRecipe);
+        console.log('Ingredients:', mappedRecipe.ingredients);
+        console.log('Instructions:', mappedRecipe.instructions);
         
         setRecipe(mappedRecipe);
       } catch (err) {
@@ -168,27 +213,27 @@ const RecipeDetail = () => {
 
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
-                  <ul className="space-y-2">
-                    {recipe.ingredients.map((ingredient, index) => (
-                      <li key={index} className="flex items-start">
-                        <div className="h-2 w-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                        <span className="text-gray-700">{ingredient}</span>
-                      </li>
-                    ))}
+                  <ul className="list-disc pl-6 space-y-2">
+                    {Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 ? (
+                      recipe.ingredients.map((ingredient, index) => (
+                        <li key={index} className="text-gray-700">{ingredient}</li>
+                      ))
+                    ) : (
+                      <li className="text-gray-700">No ingredients available</li>
+                    )}
                   </ul>
                 </div>
 
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
-                  <ol className="space-y-4">
-                    {recipe.instructions.map((instruction, index) => (
-                      <li key={index} className="flex items-start">
-                        <div className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-4 flex-shrink-0 mt-0.5">
-                          {index + 1}
-                        </div>
-                        <span className="text-gray-700 leading-relaxed">{instruction}</span>
-                      </li>
-                    ))}
+                  <ol className="list-decimal pl-6 space-y-4">
+                    {Array.isArray(recipe.instructions) && recipe.instructions.length > 0 ? (
+                      recipe.instructions.map((instruction, index) => (
+                        <li key={index} className="text-gray-700 leading-relaxed">{instruction}</li>
+                      ))
+                    ) : (
+                      <li className="text-gray-700">No instructions available</li>
+                    )}
                   </ol>
                 </div>
               </div>

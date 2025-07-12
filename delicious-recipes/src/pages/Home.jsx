@@ -9,7 +9,7 @@ const Home = () => {
   useEffect(() => {
     const fetchFeaturedRecipes = async () => {
       try {
-        const response = await fetch(`https://api.spoonacular.com/recipes/random?limitLicense=true&number=3&apiKey=${import.meta.env.VITE_SPOONACULAR_API_KEY}`);
+        const response = await fetch(`https://api.spoonacular.com/recipes/random?limitLicense=true&number=3&apiKey=42efc48359744b818de56cd5c7947ae5`);
         if (!response.ok) {
           throw new Error('Failed to fetch featured recipes');
         }
@@ -102,7 +102,7 @@ const Home = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
-                to="/home"
+                to="/recipes"
                 className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white hover:bg-white hover:text-orange-600 font-semibold rounded-2xl transition-all duration-200 transform hover:scale-105"
               >
                 Learn More

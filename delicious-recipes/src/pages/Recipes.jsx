@@ -11,11 +11,27 @@ const Recipes = () => {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const response = await fetch(`https://api.spoonacular.com/recipes/random?limitLicense=true&number=20&apiKey=${import.meta.env.VITE_SPOONACULAR_API_KEY}`);
+        console.log('API Key:', import.meta.env.VITE_SPOONACULAR_API_KEY);
+        const apiUrl = `https://api.spoonacular.com/recipes/random?limitLicense=true&number=20&apiKey=42efc48359744b818de56cd5c7947ae5`;
+        console.log('API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch recipes');
+          const errorText = await response.text();
+          console.error('Response error text:', errorText);
+          throw new Error(`Failed to fetch recipes: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
+        console.log('API Response:', data);
         
         // Check if we have recipes in the response
         if (!data.recipes || data.recipes.length === 0) {
@@ -26,10 +42,7 @@ const Recipes = () => {
         const recipesWithPrices = data.recipes.map(recipe => ({
           id: recipe.id,
           title: recipe.title,
-          body: recipe.summary ? 
-            recipe.summary.replace(/<[^>]*>/g, '').trim() || 
-            `A delicious ${recipe.title.toLowerCase()} recipe that's perfect for any occasion.` : 
-            `A delicious ${recipe.title.toLowerCase()} recipe that's perfect for any occasion.`,
+          body: recipe.summary || `A delicious ${recipe.title.toLowerCase()} recipe that's perfect for any occasion.`,
           price: (recipe.pricePerServing / 100).toFixed(2), // Convert cents to dollars
           cookTime: recipe.readyInMinutes,
           servings: recipe.servings,
@@ -38,6 +51,7 @@ const Recipes = () => {
         
         setRecipes(recipesWithPrices);
       } catch (err) {
+        console.error('Error details:', err);
         setError(err.message);
       } finally {
         setLoading(false);

@@ -9,7 +9,6 @@ const Header = () => {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Recipes', href: '/recipes' },
-    { name: 'About', href: '/about' },
   ];
 
   const isActive = (path) => {
